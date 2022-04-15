@@ -1,0 +1,42 @@
+body {
+    margin: 0;
+}
+.toolBox {
+    position: absolute;
+    display: inline-block;
+    width: 70px;
+    height: 200px;
+    overflow: auto;
+}
+.toolBox:hover {
+    box-shadow: 0 0 4px 2px gray;
+}
+.toolBox .tool {
+    position: absolute;
+}
+
+.container {
+    width: 100vw;
+    height: 100vh;
+    display: inline-block;
+}
+
+.selected:not(.toolBox) {
+    border: 1px dashed blue;
+    box-shadow: 0 0 2px 1px gray;
+}
+
+.relation {
+    cursor: move;
+    position: absolute;
+    z-index: 1000;
+}
+
+.relation:hover {
+    box-shadow: 0 0 4px 2px gray;
+}
+
+
+.relation .image {
+    margin: 0 auto;
+}
