@@ -193,18 +193,15 @@ const ToolBoxEventCreator = {
  */
 const ToolBoxEvent = {
     down: function(e) {
-        // ツールbox用の相対位置を設定
-        ToolBoxOffsetPos.x = this.parentNode.offsetLeft;
-        ToolBoxOffsetPos.y = this.parentNode.offsetTop;
-        
         // 選択したものはドラッグで移動してしまうので、
         // コピーしたものをツールboxの中に残す
         const copyToolElm = this.cloneNode(true);
         this.parentNode.appendChild(copyToolElm);
-        document.getElementById(IDS.MAIN_FRAME).appendChild(this);
         copyToolElm.addEventListener('mousedown', ToolBoxEvent.down, false);
-        let x = e.pageX - this.offsetLeft - ToolBoxOffsetPos.x;
-        let y = e.pageY - this.offsetTop - ToolBoxOffsetPos.y;
+
+        let x = e.pageX - this.offsetLeft - this.parentNode.offsetLeft;
+        let y = e.pageY - this.offsetTop - this.parentNode.offsetTop;
+        document.getElementById(IDS.MAIN_FRAME).appendChild(this);
         this.style.left = e.pageX - x + 'px';
         this.style.top = e.pageY - y + 'px';
 
@@ -212,20 +209,8 @@ const ToolBoxEvent = {
         RelationEventCreator.addEvents([copyToolElm]);
         this.classList.remove(CLS.TOOL_ITEM);
         this.removeEventListener('mousedown', ToolBoxEvent.down, false);
-        this.addEventListener('mouseup', ToolBoxEvent.offsetPosClear, false);
-        this.addEventListener('mouseleave', ToolBoxEvent.offsetPosClear, false);
     },
-    offsetPosClear: function(e) {
-        ToolBoxOffsetPos.x = 0;
-        ToolBoxOffsetPos.y = 0;
-        this.removeEventListener('mouseup', ToolBoxEvent.offsetPosClear, false);
-        this.removeEventListener('mouseleave', ToolBoxEvent.offsetPosClear, false);
-    },
-};
-// ツールboxの相対位置
-const ToolBoxOffsetPos = {
-    x: 0,
-    y: 0,
+
 };
 
 // ------------------------------
@@ -288,7 +273,6 @@ const GlobalEvent = {
     clearAll: function(e){
         RelationEvent.clear(e);
         RelationEvent.selectOff(e);
-        ToolBoxEvent.offsetPosClear(e);
     },
     onCtrl: function(){
         isOnCtrl = true;
