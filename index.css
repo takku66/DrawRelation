@@ -1,6 +1,21 @@
+/* ---------------------------------------- */
+/* 全体のスタイル */
 body {
     margin: 0;
 }
+.container {
+    width: 100vw;
+    height: 100vh;
+    display: inline-block;
+}
+/* 選択中を示すスタイル */
+.selected:not(.toolBox) {
+    border: 1px dashed blue;
+    box-shadow: 0 0 2px 1px gray;
+}
+
+/* ---------------------------------------- */
+/* ツールボックスの共通スタイル */
 .toolBox {
     position: absolute;
     display: inline-block;
@@ -15,28 +30,93 @@ body {
     position: absolute;
 }
 
-.container {
-    width: 100vw;
-    height: 100vh;
-    display: inline-block;
-}
-
-.selected:not(.toolBox) {
-    border: 1px dashed blue;
-    box-shadow: 0 0 2px 1px gray;
-}
-
+/* ---------------------------------------- */
+/* 図形の共通スタイル */
 .relation {
     cursor: move;
     position: absolute;
     z-index: 1000;
 }
-
+/* マウスオーバー中の図形 */
 .relation:hover {
     box-shadow: 0 0 4px 2px gray;
 }
-
-
+/* 図形の画像 */
 .relation .image {
     margin: 0 auto;
+}
+
+/* ---------------------------------------- */
+/* 要素削除用のボタン */
+.btn-delete {
+    position: absolute;
+    font-size: 0.8rem;
+    padding: 0 0.2em;
+    border-radius: 4px;
+    top: 0;
+    right: -1.5em;
+    opacity: 0;
+}
+/* 選択状態のときの削除ボタン */
+.selected .btn-delete {
+    opacity: 1;
+    box-shadow: 0 0 2px 1px silver;
+    cursor: pointer;
+}
+.resize_point {
+    /* 大きさを決めて変数化 */
+    --psize: 8px;
+    --ps1_2: 4px;
+    --ps3_2: 12px;
+    --ps3_2_minus: -12px;
+    /* *************** */
+    opacity: 0;
+    border-radius: var(--ps1_2);
+    width: var(--psize);
+    height: var(--psize);
+    position: absolute;
+    box-shadow: 0 0 2px 1px silver;
+}
+.selected .resize_point {
+    opacity: 1;
+}
+.resize_point.n {
+    top: var(--ps3_2_minus);
+    left: calc(50% - var(--ps1_2));
+    cursor: ns-resize;
+}
+.resize_point.ne {
+    top: var(--ps3_2_minus);
+    right: var(--ps3_2_minus);
+    cursor: nesw-resize;
+}
+.resize_point.e {
+    top: calc(50% - var(--ps1_2));
+    right: var(--ps3_2_minus);
+    cursor: ew-resize;
+}
+.resize_point.se {
+    bottom: var(--ps3_2_minus);
+    right: var(--ps3_2_minus);
+    cursor: nwse-resize;
+}
+.resize_point.s {
+    bottom: var(--ps3_2_minus);
+    left: calc(50% - var(--ps1_2));
+    cursor: ns-resize;
+}
+.resize_point.ws {
+    bottom: var(--ps3_2_minus);
+    left: var(--ps3_2_minus);
+    cursor: nesw-resize;
+}
+.resize_point.w {
+    top: calc(50% - var(--ps1_2));
+    left: var(--ps3_2_minus);
+    cursor: ew-resize;
+}
+.resize_point.wn {
+    top: var(--ps3_2_minus);
+    left: var(--ps3_2_minus);
+    cursor: nwse-resize;
 }

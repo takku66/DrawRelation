@@ -1,15 +1,30 @@
 class Drawer {
+
+    /**
+     * @param {*} frameElement 描画対象の要素
+     * @param {*} data 描画対象のデータセット
+     */
     constructor(frameElement, data){
         this.frameElement = frameElement;
         this.data = data;
     }
 
+    /**
+     * 図形を描画する
+     */
     draw(){
         for(let i = 0, ilen = this.data.length; i < ilen; i++){
             if(isNull(this.data[i]) || isUndefined(this.data[i])) continue;
-            this.createRelation(this.data[i]);
+            const relation = this.createRelation(this.data[i]);
+            RelationEventCreator.appendDeleteButton(relation);
+            RelationEventCreator.appendResizePoint(relation);
         }
     }
+    /**
+     * 図形の要素を作成する
+     * @param {*} json 
+     * @returns 
+     */
     createRelation(json){
         const newElm = document.createElement('div');
         const imgDiv = document.createElement('div');
@@ -28,9 +43,15 @@ class Drawer {
         
         this.frameElement.appendChild(newElm);
         newElm.appendChild(imgDiv);
+        return newElm;
     }
+
 }
 class ToolBox {
+    /**
+     * @param {*} frameElement 描画対象の要素
+     * @param {*} data 描画対象のデータセット
+     */
     constructor(frameElement, data){
         this.frameElement = frameElement;
         this.data = data;
@@ -38,12 +59,19 @@ class ToolBox {
         this.defaultHeight = 30;
     }
 
+    /**
+     * ツールボックスを描画する
+     */
     draw(){
         for(let i = 0, ilen = this.data.length; i < ilen; i++){
             if(this.data[i] === null || typeof(this.data[i]) === 'undefined') continue;
             this.createTool(this.data[i]);
         }
     }
+    /**
+     * ツール群を作成する
+     * @param {*} json 
+     */
     createTool(json){
         const newElm = document.createElement('div');
         const imgDiv = document.createElement('div');
@@ -75,12 +103,77 @@ const RelationEventCreator = {
             elms[i].addEventListener('mousedown', RelationEvent.down, false);
         }
     },
-};
-const RelationEvent = {
-    
-    x: 0,
-    y: 0,
+    /**
+     * 各図形に削除機能をつける
+     * @param {*} elm 
+     * @returns 
+     */
+    appendDeleteButton: function(elm){
+        const deleteBtn = document.createElement('div');
+        deleteBtn.innerText = '✕';
+        deleteBtn.classList.add('btn-delete');
+        const tmpDltBtn = deleteBtn.cloneNode(true);
+        elm.appendChild(tmpDltBtn);
+        tmpDltBtn.addEventListener('click', function(){
+            RelationEvent.delete(this.parentNode);
+        }, false);
+        return elm;
+    },
+    /**
+     * 各図形にリサイズ用の印をつける
+     * @param {*} elm 
+     * @returns 
+     */
+    appendResizePoint: function(elm){
+        const northP = document.createElement('div');   // 上
+        northP.classList.add('resize_point');
+        const neP = northP.cloneNode(true);             // 右上
+        const eastP = northP.cloneNode(true);           // 右
+        const seP = northP.cloneNode(true);             // 右下
+        const southP = northP.cloneNode(true);          // 下
+        const wsP = northP.cloneNode(true);             // 左下
+        const westP = northP.cloneNode(true);           // 左
+        const wnP = northP.cloneNode(true);             // 左上
 
+        northP.classList.add('n');
+        neP.classList.add('ne');
+        eastP.classList.add('e');
+        seP.classList.add('se');
+        southP.classList.add('s');
+        wsP.classList.add('ws');
+        westP.classList.add('w');
+        wnP.classList.add('wn');
+
+        // 「│」縦のリサイズイベント
+        northP.addEventListener('mousedown', RelationEvent.resizeNs, false);
+        southP.addEventListener('mousedown', RelationEvent.resizeNs, false);
+        // 「─」横のリサイズイベント
+        eastP.addEventListener('mousedown', RelationEvent.resizeEw, false);
+        westP.addEventListener('mousedown', RelationEvent.resizeEw, false);
+        // 「／」右斜めのリサイズイベント
+        neP.addEventListener('mousedown', RelationEvent.resizeNesw, false);
+        wsP.addEventListener('mousedown', RelationEvent.resizeNesw, false);
+        // 「＼」左斜めのリサイズイベント
+        seP.addEventListener('mousedown', RelationEvent.resizeNwse, false);
+        wnP.addEventListener('mousedown', RelationEvent.resizeNwse, false);
+
+        elm.appendChild(northP);
+        elm.appendChild(neP);
+        elm.appendChild(eastP);
+        elm.appendChild(seP);
+        elm.appendChild(southP);
+        elm.appendChild(wsP);
+        elm.appendChild(westP);
+        elm.appendChild(wnP);
+
+        return elm;
+    },
+};
+
+const RelationEvent = {
+
+    /** 位置座標 */
+    movePos: {x: 0, y: 0,},
     /**
      * 図形をマウスダウンした時のイベント
      */ 
@@ -89,8 +182,8 @@ const RelationEvent = {
         e.stopPropagation();
 
         // moveイベント内だと毎回上書きされてしまうので
-        x = e.pageX - this.offsetLeft;
-        y = e.pageY - this.offsetTop;
+        RelationEvent.movePos.x = e.pageX - this.offsetLeft;
+        RelationEvent.movePos.y = e.pageY - this.offsetTop;
         
         // 移動目的でマウスダウンされていれば、移動用のイベントを付与
         this.classList.add(CLS.DRAGING);
@@ -109,8 +202,9 @@ const RelationEvent = {
     move: function(e) {
 
         const dragingElm = document.getElementsByClassName(CLS.DRAGING)[0];
-        dragingElm.style.left = e.pageX - x + 'px';
-        dragingElm.style.top = e.pageY - y + 'px';
+        if(dragingElm === null || typeof(dragingElm) === 'undefined') return;
+        dragingElm.style.left = e.pageX - RelationEvent.movePos.x + 'px';
+        dragingElm.style.top = e.pageY - RelationEvent.movePos.y + 'px';
 
         this.removeEventListener('click', RelationEvent.select, false);
 
@@ -146,13 +240,11 @@ const RelationEvent = {
     select: function(e) {
         e.stopPropagation();
 
-        const selectedElms = document.getElementsByClassName(CLS.SELECTED);
-
         if( !isOnCtrl){
-            RelationEvent.selectOff();
+            RelationEvent.selectOff(e);
         }
-        this.classList.add(CLS.SELECTED);
-        this.removeEventListener('click', RelationEvent.select, false);
+        elm.classList.add(CLS.SELECTED);
+        elm.removeEventListener('click', RelationEvent.select, false);
 
         if(_drdebug_) console.log(`Select Target is ${e.target.innerHTML}`);
     },
@@ -174,6 +266,95 @@ const RelationEvent = {
             selectedElms[0].removeEventListener('click', RelationEvent.selectOff, false);
             selectedElms[0].classList.remove(CLS.SELECTED);
         }
+    },
+    /**
+     * 図形の削除
+     * @param {*} elm 
+     */
+    delete: function(elm){
+        elm.remove();
+    },
+    /**
+     * 図形のリサイズ処理
+     * @param {*} e 
+     */
+    resizeNs: function(e){
+        RelationEvent.ResizeEvent.down(e, RelationEvent.ResizeEvent.type.NS);
+    },
+    resizeEw: function(e){
+        RelationEvent.ResizeEvent.down(e, RelationEvent.ResizeEvent.type.EW);
+    },
+    resizeNesw: function(e){
+        RelationEvent.ResizeEvent.down(e, RelationEvent.ResizeEvent.type.NESW);
+    },
+    resizeNwse: function(e){
+        RelationEvent.ResizeEvent.down(e, RelationEvent.ResizeEvent.type.NWSE);
+    },
+    ResizeEvent: {
+        type: {'NS': 'ns', 'EW': 'ew', 'NESW': 'nesw', 'NWSE': 'nwse'},
+        baseNum: {x: 0, y: 0},
+        baseSize: {height: 0, width: 0},
+        
+        down: function(e, type){
+            // ターゲットの図形のみをイベント発火させる
+            e.stopPropagation();
+
+            // moveイベント内だと毎回上書きされてしまうので
+            RelationEvent.ResizeEvent.baseNum.x = e.pageX;
+            RelationEvent.ResizeEvent.baseNum.y = e.pageY;
+
+            const targetElm = e.target.parentNode;
+            RelationEvent.ResizeEvent.baseSize.height = targetElm.offsetHeight;
+            RelationEvent.ResizeEvent.baseSize.width = targetElm.offsetWidth;
+            
+            // 移動目的でマウスダウンされていれば、移動用のイベントを付与
+            targetElm.classList.add(CLS.RESIZING);
+
+            RelationEvent.ResizeEvent.move.type = type;
+            document.body.addEventListener('mousemove', RelationEvent.ResizeEvent.move, false);
+
+            if(_drdebug_) console.log(`Resize Event [keydown]. Target is ${targetElm.innerHTML}`);
+        },
+        move: {
+            type: null,
+            handleEvent: function(e){
+                // ターゲットの図形のみをイベント発火させる
+                e.stopPropagation();
+                const resizingElm = document.getElementsByClassName(CLS.RESIZING)[0];
+                if(resizingElm === null || typeof(resizingElm) === 'undefined') return;
+
+                switch(RelationEvent.ResizeEvent.move.type){
+                    case RelationEvent.ResizeEvent.type.NS:
+                        resizingElm.style.height = RelationEvent.ResizeEvent.baseSize.height + (e.pageY - RelationEvent.ResizeEvent.baseNum.y) + 'px';
+                        break;
+                    case RelationEvent.ResizeEvent.type.EW:
+                        resizingElm.style.width = RelationEvent.ResizeEvent.baseSize.width + (e.pageY - RelationEvent.ResizeEvent.baseNum.x) + 'px';
+                        break;
+                    case RelationEvent.ResizeEvent.type.NESW:
+                    case RelationEvent.ResizeEvent.type.NWSE:
+                        resizingElm.style.height = RelationEvent.ResizeEvent.baseSize.height + (e.pageY - RelationEvent.ResizeEvent.baseNum.y) + 'px';
+                        resizingElm.style.width = RelationEvent.ResizeEvent.baseSize.width + (e.pageX - RelationEvent.ResizeEvent.baseNum.x) + 'px';
+                        break;
+                }
+                // ドラッグを外した時も、画面外に行ったときも、同じ処理を実行
+                e.target.addEventListener('mouseup', RelationEvent.ResizeEvent.clear, false);
+                document.body.addEventListener('mouseleave', RelationEvent.ResizeEvent.clear, false);
+            },
+        },
+        clear: function(e){
+            e.stopPropagation();
+
+            document.body.removeEventListener('mousemove', RelationEvent.ResizeEvent.move, false);
+            document.body.removeEventListener('mouseleave', RelationEvent.ResizeEvent.clear, false);
+    
+            const resizingElm = document.getElementsByClassName(CLS.RESIZING)[0];
+    
+            if(isNull(resizingElm) || isUndefined(resizingElm)) return;
+            e.target.removeEventListener('mouseup', RelationEvent.ResizeEvent.clear, false);
+            resizingElm.classList.remove(CLS.RESIZING);
+    
+            if(_drdebug_) console.log(`Event Cleared!: ${e.target.innerHTML}`);
+        },
     },
 };
 
@@ -197,16 +378,20 @@ const ToolBoxEvent = {
         // コピーしたものをツールboxの中に残す
         const copyToolElm = this.cloneNode(true);
         this.parentNode.appendChild(copyToolElm);
+        // ツールbox内に残した要素にも、今処理中のイベントと同じイベントをつける
         copyToolElm.addEventListener('mousedown', ToolBoxEvent.down, false);
-
+        RelationEventCreator.addEvents([copyToolElm]);
+        
+        // ツールboxの座標分要素がずれてしまうので、ツールboxの位置も取得して位置ずれをなくす
         let x = e.pageX - this.offsetLeft - this.parentNode.offsetLeft;
         let y = e.pageY - this.offsetTop - this.parentNode.offsetTop;
+        // ツールbox内にあると外に出せないので、外のフレームにだしてあげる
         document.getElementById(IDS.MAIN_FRAME).appendChild(this);
         this.style.left = e.pageX - x + 'px';
         this.style.top = e.pageY - y + 'px';
-
-        // 通常の要素と同じ用にイベントを付与
-        RelationEventCreator.addEvents([copyToolElm]);
+        
+        RelationEventCreator.appendDeleteButton(this);
+        RelationEventCreator.appendResizePoint(this);
         this.classList.remove(CLS.TOOL_ITEM);
         this.removeEventListener('mousedown', ToolBoxEvent.down, false);
     },
@@ -249,7 +434,7 @@ const GlobalEvent = {
         if(_drtest_) console.log(e.key);
         switch(e.key){
             case KEYS.ESCAPE:
-                GlobalEvent.clearAll(e);
+                GlobalEvent.initializeAll(e);
                 break;
             case KEYS.CTRL:
                 GlobalEvent.onCtrl();
@@ -266,19 +451,45 @@ const GlobalEvent = {
             case KEYS.CTRL:
                 GlobalEvent.offCtrl();
                 break;
+            case KEYS.DELETE:
+                GlobalEvent.deleteSelectedElms();
             default:
                 break;
         }
     },
-    clearAll: function(e){
+    /**
+     * 各要素のイベントや選択状態等を、初期状態に戻す
+     * @param {*} e 
+     */
+    initializeAll: function(e){
         RelationEvent.clear(e);
         RelationEvent.selectOff(e);
     },
+    /**
+     * Ctrlキーを押下中
+     */
     onCtrl: function(){
         isOnCtrl = true;
     },
+    /**
+     * Ctrlキーを押下していない状態
+     */
     offCtrl: function(){
         isOnCtrl = false;
+    },
+    /**
+     * 選択中の図形を削除する
+     * @returns 
+     */
+    deleteSelectedElms: function(){
+        const selectedElms = document.getElementsByClassName(CLS.SELECTED);
+
+        if(isNull(selectedElms) || isUndefined(selectedElms)) return false;
+
+        for(let i = 0, ilen = selectedElms.length; i < ilen; i++){
+            if(_drdebug_) console.log(`Delete elements! : ${i}: ${selectedElms[0].innerHTML}`);
+            RelationEvent.delete(selectedElms[0]);
+        }
     }
 };
 
@@ -290,6 +501,7 @@ const KEYS = {
     'CTRL': 'Control',
     'SHIFT': 'Shift',
     'ALT': 'Alt',
+    'DELETE': 'Delete',
 };
 const IDS = {
     'MAIN_FRAME': 'mainContainer',
@@ -302,6 +514,7 @@ const CLS = {
     'TOOL_BOX': 'toolBox',
     'TOOL_ITEM': 'tool',
     'RELATION_IN_TOOL': 'relation tool',
+    'RESIZING': 'resizing',
 };
 
 // ------------------------------
@@ -348,6 +561,6 @@ window.addEventListener('DOMContentLoaded', function(){
 
     window.addEventListener('keydown', GlobalEvent.kdown, false);
     window.addEventListener('keyup', GlobalEvent.kup, false);
-    mainFrame.addEventListener('click', GlobalEvent.clearAll, false);
+    mainFrame.addEventListener('click', GlobalEvent.initializeAll, false);
 
 }, false);
